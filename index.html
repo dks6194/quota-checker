@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Antigravity Quota Watcher</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --border-card: rgba(99, 102, 241, 0.15);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #818cf8;
+            --accent-bright: #a5b4fc;
+            --green: #34d399;
+            --yellow: #fbbf24;
+            --red: #f87171;
+            --glow-accent: rgba(129, 140, 248, 0.25);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated gradient background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+            animation: bgShift 20s ease-in-out infinite alternate;
+            z-index: 0;
+        }
+
+        @keyframes bgShift {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-5%, 3%) rotate(3deg); }
+        }
+
+        /* -------- Login Screen -------- */
+        #login-screen {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border-card);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 60px var(--glow-accent);
+            animation: cardFadeIn 0.6s ease-out;
+        }
+
+        @keyframes cardFadeIn {
+            from { opacity: 0; transform: translateY(24px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .login-card .logo {
+            font-size: 2.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-card h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-bright), #c4b5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.4rem;
+        }
+
+        .login-card p {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .login-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            padding: 0.85rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(99, 102, 241, 0.55);
+        }
+
+        .login-btn:active { transform: translateY(0); }
+
+        .login-btn svg { width: 20px; height: 20px; }
+
+        /* -------- Dashboard -------- */
+        #dashboard {
+            position: relative;
+            z-index: 1;
+            display: none;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem 2rem;
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .top-bar .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .top-bar .brand span.icon { font-size: 1.4rem; }
+
+        .top-bar .brand h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-bright), #c4b5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .top-bar .right-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .tier-badge {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            color: var(--accent-bright);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .last-updated {
+            color: var(--text-muted);
+            font-size: 0.78rem;
+        }
+
+        .refresh-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 12px;
+            color: var(--accent-bright);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(99, 102, 241, 0.22);
+            box-shadow: 0 0 16px var(--glow-accent);
+        }
+
+        .refresh-btn.spinning svg {
+            animation: spin 0.6s linear;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .refresh-btn svg { width: 20px; height: 20px; }
+
+        /* -------- Quota Grid -------- */
+        .quota-container {
+            padding: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .quota-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .quota-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-card);
+            border-radius: 18px;
+            padding: 1.4rem 1.5rem;
+            transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+            animation: cardSlideIn 0.4s ease-out both;
+        }
+
+        .quota-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        @keyframes cardSlideIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .quota-card .model-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.9rem;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.7rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.6s ease-out;
+            background: linear-gradient(90deg, var(--green), #6ee7b7);
+        }
+
+        .progress-fill.medium {
+            background: linear-gradient(90deg, var(--yellow), #fcd34d);
+        }
+
+        .progress-fill.low {
+            background: linear-gradient(90deg, var(--red), #fca5a5);
+        }
+
+        .progress-fill.depleted {
+            width: 100% !important;
+            background: repeating-linear-gradient(
+                -45deg,
+                rgba(248, 113, 113, 0.25),
+                rgba(248, 113, 113, 0.25) 6px,
+                rgba(248, 113, 113, 0.1) 6px,
+                rgba(248, 113, 113, 0.1) 12px
+            );
+        }
+
+        .quota-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .quota-percent {
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .quota-percent.high { color: var(--green); }
+        .quota-percent.medium { color: var(--yellow); }
+        .quota-percent.low { color: var(--red); }
+
+        .quota-reset {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* -------- Loading / Error States -------- */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 14, 26, 0.8);
+            backdrop-filter: blur(6px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.active { display: flex; }
+
+        .loader {
+            width: 48px; height: 48px;
+            border: 4px solid rgba(129, 140, 248, 0.15);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .error-toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: rgba(248, 113, 113, 0.15);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: #fca5a5;
+            padding: 0.8rem 1.5rem;
+            border-radius: 14px;
+            font-size: 0.88rem;
+            backdrop-filter: blur(12px);
+            transition: transform 0.35s ease-out, opacity 0.35s;
+            opacity: 0;
+            z-index: 200;
+        }
+
+        .error-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* -------- Responsive -------- */
+        @media (max-width: 600px) {
+            .top-bar { padding: 1rem; }
+            .quota-container { padding: 1rem; }
+            .quota-grid { grid-template-columns: 1fr; }
+            .login-card { padding: 2rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="login-screen">
+    <div class="login-card">
+        <div class="logo">🚀</div>
+        <h1>Antigravity Quota Watcher</h1>
+        <p>Monitor your Gemini model quotas in real-time. Sign in with Google to get started.</p>
+        <button class="login-btn" onclick="startLogin()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972a6.033 6.033 0 110-12.064c1.498 0 2.866.549 3.921 1.453l2.814-2.814A9.969 9.969 0 0012.545 2C7.021 2 2.543 6.477 2.543 12s4.478 10 10.002 10c8.396 0 10.249-7.85 9.426-11.748l-9.426-.013z"/></svg>
+            Sign in with Google
+        </button>
+    </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+    <div class="top-bar">
+        <div class="brand">
+            <span class="icon">🚀</span>
+            <h2>Antigravity Quota Watcher</h2>
+        </div>
+        <div class="right-section">
+            <span class="tier-badge" id="tier-badge" style="display:none;"></span>
+            <span class="last-updated" id="last-updated"></span>
+            <button class="refresh-btn" onclick="manualRefresh()" title="Refresh quota">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="quota-container">
+        <div class="quota-grid" id="quota-grid"></div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading-overlay">
+    <div class="loader"></div>
+</div>
+
+<!-- Error Toast -->
+<div class="error-toast" id="error-toast"></div>
+
+<script>
+    let autoRefreshInterval = null;
+
+    // --- Lifecycle ---
+    async function init() {
+        try {
+            const res = await fetch('/api/status');
+            const data = await res.json();
+            if (data.authenticated) {
+                showDashboard();
+                await fetchQuota();
+                startAutoRefresh();
+            } else {
+                showLogin();
+            }
+        } catch (e) {
+            showLogin();
+        }
+    }
+
+    function showLogin() {
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('dashboard').style.display = 'none';
+    }
+
+    function showDashboard() {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'flex';
+    }
+
+    // --- Auth ---
+    function startLogin() {
+        showLoading(true);
+        window.location.href = '/api/login';
+    }
+
+    // --- Quota Fetching ---
+    async function fetchQuota() {
+        try {
+            const res = await fetch('/api/quota');
+            if (res.status === 401) {
+                stopAutoRefresh();
+                showLogin();
+                showError('Session expired. Please sign in again.');
+                return;
+            }
+            const data = await res.json();
+            renderQuota(data);
+        } catch (e) {
+            showError('Failed to fetch quota. Retrying…');
+        }
+    }
+
+    function renderQuota(data) {
+        // Tier badge
+        const badge = document.getElementById('tier-badge');
+        if (data.tier) {
+            badge.textContent = data.tier;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+
+        // Update timestamp
+        document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+        // Render model cards
+        const grid = document.getElementById('quota-grid');
+        grid.innerHTML = '';
+
+        const models = data.models || {};
+        const entries = Object.entries(models);
+
+        if (entries.length === 0) {
+            grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align:center; padding:3rem 0;">No model quota data available.</p>';
+            return;
+        }
+
+        entries.forEach(([name, info], i) => {
+            const pct = info.remaining_percent;
+            const resetText = info.reset_text || '';
+
+            let colorClass = 'high';
+            if (pct <= 0) colorClass = 'low';
+            else if (pct < 30) colorClass = 'low';
+            else if (pct < 60) colorClass = 'medium';
+
+            const card = document.createElement('div');
+            card.className = 'quota-card';
+            card.style.animationDelay = `${i * 0.06}s`;
+
+            const fillClass = pct <= 0 ? 'depleted' : colorClass;
+            const fillWidth = pct <= 0 ? '100' : pct.toFixed(1);
+
+            card.innerHTML = `
+                <div class="model-name">${info.display_name || name}</div>
+                <div class="progress-track">
+                    <div class="progress-fill ${fillClass}" style="width: ${fillWidth}%"></div>
+                </div>
+                <div class="quota-meta">
+                    <span class="quota-percent ${colorClass}">
+                        ${pct <= 0 ? 'Depleted' : pct.toFixed(1) + '% remaining'}
+                    </span>
+                    <span class="quota-reset">${resetText}</span>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    // --- Auto-refresh ---
+    function startAutoRefresh() {
+        stopAutoRefresh();
+        autoRefreshInterval = setInterval(fetchQuota, 5000);
+    }
+
+    function stopAutoRefresh() {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+        }
+    }
+
+    // --- Manual refresh ---
+    async function manualRefresh() {
+        const btn = document.querySelector('.refresh-btn');
+        btn.classList.add('spinning');
+        await fetchQuota();
+        setTimeout(() => btn.classList.remove('spinning'), 600);
+    }
+
+    // --- UI Helpers ---
+    function showLoading(show) {
+        document.getElementById('loading-overlay').classList.toggle('active', show);
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('error-toast');
+        el.textContent = msg;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 4000);
+    }
+
+    // --- Boot ---
+    document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
